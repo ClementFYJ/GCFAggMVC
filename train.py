@@ -8,6 +8,7 @@ import random
 from loss import Loss
 from dataloader import load_data
 import os
+import wandb
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # Synthetic3d
 # Prokaryotic
@@ -21,7 +22,7 @@ import os
 # Caltech-3V
 # Caltech-4V
 # Caltech-5V
-Dataname = 'Hdigit'
+Dataname = 'CCV'
 parser = argparse.ArgumentParser(description='train')
 parser.add_argument('--dataset', default=Dataname)
 parser.add_argument('--batch_size', default=256, type=int)
@@ -35,6 +36,7 @@ parser.add_argument("--low_feature_dim", default=512)
 parser.add_argument("--high_feature_dim", default=128)
 args = parser.parse_args()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+wandb.init(project="GCFAggMVC", name=""+Dataname)
 
 if args.dataset == "MNIST-USPS":
     args.fine_tune_epochs = 100
@@ -72,6 +74,9 @@ if args.dataset == "Caltech-4V":
 if args.dataset == "Caltech-5V":
     args.fine_tune_epochs = 200
     seed = 5
+if args.dataset == "BBCSport":
+    args.con_epochs = 50
+    seed = 10
 def setup_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -89,6 +94,7 @@ data_loader = torch.utils.data.DataLoader(
         shuffle=True,
         drop_last=True,
     )
+wandb.config.update(args)
 
 def pre_train(epoch):
     tot_loss = 0.
@@ -106,6 +112,7 @@ def pre_train(epoch):
         optimizer.step()
         tot_loss += loss.item()
     print('Epoch {}'.format(epoch), 'Loss:{:.6f}'.format(tot_loss / len(data_loader)))
+    wandb.log({"Pretrain_Loss": tot_loss / len(data_loader)})
 
 def fine_tune(epoch):
     tot_loss = 0.
@@ -125,6 +132,7 @@ def fine_tune(epoch):
         optimizer.step()
         tot_loss += loss.item()
     print('Epoch {}'.format(epoch), 'Loss:{:.6f}'.format(tot_loss/len(data_loader)))
+    wandb.log({"FineTuning_Loss": tot_loss / len(data_loader)})
 
 if not os.path.exists('./models'):
     os.makedirs('./models')

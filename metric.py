@@ -3,6 +3,7 @@ from sklearn.cluster import KMeans
 from scipy.optimize import linear_sum_assignment
 from torch.utils.data import DataLoader
 import numpy as np
+import wandb
 import torch
 
 def cluster_acc(y_true, y_pred):
@@ -68,3 +69,4 @@ def valid(model, device, dataset, view, data_size, class_num):
     y_pred = kmeans.fit_predict(commonZ)
     nmi, ari, acc, pur = evaluate(labels_vector, y_pred)
     print('ACC = {:.4f} NMI = {:.4f} PUR={:.4f} ARI = {:.4f}'.format(acc, nmi, pur, ari))
+    wandb.log({"Final_Accuracy": acc, "Final_NMI": nmi, "Final_Purity": pur})
